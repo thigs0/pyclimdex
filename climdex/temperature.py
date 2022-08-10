@@ -65,3 +65,25 @@ class TemperatureIndices:
         X_max_arr = utils.resample_daily(X2_arr, lambda x: x.max(), time_dim=self.time_dim)
         return X_max_arr - X_min_arr
     
+        def annual_txx(self, X: Union[xr.DataArray, xr.Dataset], varname=None):
+        X_arr = utils.data_array_or_dataset_var(X, var=varname)
+        X_arr = utils.resample_daily(X_arr, lambda x: x.max(), time_dim=self.time_dim)
+        return X.resample({self.time_dim: '1Y'}).max()
+
+    def annual_tnx(self, X: Union[xr.DataArray, xr.Dataset], varname=None):
+        X_arr = utils.data_array_or_dataset_var(X, var=varname)
+        X_arr = utils.resample_daily(X_arr, lambda x: x.max(), time_dim=self.time_dim)
+        #print(X_arr)
+        return X.resample({self.time_dim: '1Y'}).min()
+
+    def tx90p(self, X: Union[xr.DataArray, xr.Dataset], varname=None):
+        X_arr = utils.data_array_or_dataset_var(X, var=varname)
+        perc = X_arr>np.percentile(X_arr, 90).astype(np.int) # array with days major than percentil as zero or one
+        X_arr = utils.resample_daily(perc, lambda x: x.sum(), time_dim=self.time_dim) # calculate the sum of days
+        return (X_arr.resample({self.time_dim: '1Y'}).sum()/365)*100 # calculate the percentage of days at year
+
+    def tn90p(self, X: Union[xr.DataArray, xr.Dataset], varname=None):
+        X_arr = utils.data_array_or_dataset_var(X, var=varname)
+        perc = X_arr < np.percentile(X_arr, 90).astype(np.int)  # array with days minor than percentil as zero or one
+        X_arr = utils.resample_daily(perc, lambda x: x.sum(), time_dim=self.time_dim) # calculate the sum of days
+        return (X_arr.resample({self.time_dim: '1Y'}).sum() / 365) * 100 # calculate the percentage of days at year
